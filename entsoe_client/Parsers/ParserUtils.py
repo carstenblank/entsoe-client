@@ -80,14 +80,14 @@ def Period_to_DataFrame_fn(get_Period_data: Callable) -> Callable:
         # Get the timestamp index
         index_df = get_Period_index(Period).to_frame(name="index", index=False)
         index_df.index += 1
+        index_df.index = index_df.index.astype(str)
 
         # extract the data with the position
         data = get_Period_data(Period)
         data_df = pd.DataFrame(data=data).set_index("position")
-        data_df.index = data_df.index.astype(int)
 
         # Join these to have the full data
-        df = index_df.join(data_df)
+        df = index_df.join(data_df).reset_index(names="position").set_index("index")
 
         metadata_nodes: list = Period.xpath(
             f"./*[not(self::Point)]", namespaces=Period.nsmap
