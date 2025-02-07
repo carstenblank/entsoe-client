@@ -77,10 +77,17 @@ def Period_to_DataFrame_fn(get_Period_data: Callable) -> Callable:
         Periods are implicitly valid as index is constructed independent from data extraction.
         Errors would occur at DataFrame construction.
         """
-        index = get_Period_index(Period)
-        data = get_Period_data(Period, length=len(index))
-        assert len(data) == len(index)
-        df = pd.DataFrame(data=data, index=index)
+        # Get the timestamp index
+        index_df = get_Period_index(Period).to_frame(name="index", index=False)
+        index_df.index += 1
+        index_df.index = index_df.index.astype(str)
+
+        # extract the data with the position
+        data = get_Period_data(Period)
+        data_df = pd.DataFrame(data=data).set_index("position")
+
+        # Join these to have the full data
+        df = index_df.join(data_df).reset_index(names="position").set_index("index")
 
         metadata_nodes: list = Period.xpath(
             f"./*[not(self::Point)]", namespaces=Period.nsmap
